@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
-import { Container, Box, Paper, TextField, Button, Typography, InputAdornment, IconButton, Grid, CssBaseline, Avatar } from "@mui/material";
+import { Container, Box, Paper, TextField, Button, Typography, InputAdornment, IconButton, Grid, CssBaseline, Avatar, Link as MuiLink } from "@mui/material";
 import { Link, useNavigate } from 'react-router-dom';
 import LoginOutlinedIcon from '@mui/icons-material/LoginOutlined';
-import PersonAddAltOutlinedIcon from '@mui/icons-material/PersonAddAltOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import supabase from '../Services/Supabase';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-// Import your local image
 import backgroundImage from '../assets/wellm.png';
 
 const defaultTheme = createTheme();
@@ -56,23 +53,22 @@ export default function LoginPage() {
       <Grid container component="main" sx={{ height: '100vh' }}>
         <CssBaseline />
         <Grid
-        item
-        xs={false}
-        sm={4}
-        md={7}
-        sx={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundColor: (t) =>
-            t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          '@media (max-width: 600px)': {
-            backgroundSize: 'contain',
-          },
-        }}
-      />
-
+          item
+          xs={false}
+          sm={4}
+          md={7}
+          sx={{
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundColor: (t) =>
+              t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            '@media (max-width: 600px)': {
+              backgroundSize: 'contain',
+            },
+          }}
+        />
         <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square sx={{ backgroundColor: '#0000' }}>
           <Box
             sx={{
@@ -138,14 +134,19 @@ export default function LoginPage() {
               </Button>
               <Grid container>
                 <Grid item xs>
-                  <Link to="#" variant="body2">
+                  <MuiLink component={Link} to="#" variant="body2">
                     Forgot password?
-                  </Link>
+                  </MuiLink>
                 </Grid>
                 <Grid item>
-                  <Link to="/signup" variant="body2">
+                  <MuiLink 
+                    component={Link} 
+                    to="/signup" 
+                    variant="body2"
+                    sx={{ textDecoration: 'underline' }}
+                  >
                     {"Don't have an account? Sign Up"}
-                  </Link>
+                  </MuiLink>
                 </Grid>
               </Grid>
             </Box>

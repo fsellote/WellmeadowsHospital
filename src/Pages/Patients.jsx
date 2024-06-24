@@ -9,18 +9,16 @@ import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-import Badge from '@mui/material/Badge';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { mainListItems } from '../Components/NavList';
 import Copyright from '../Components/Copyright';
 import supabase from '../Services/Supabase';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import InPatients from './InPatients';
 import OutPatients from './OutPatients';
 import NextOfKin from './NextOfKin';
@@ -88,6 +86,18 @@ export default function Patients() {
   const [view, setView] = useState('patients');
   const [openNextOfKinDialog, setOpenNextOfKinDialog] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openUpdateDialog, setOpenUpdateDialog] = useState(false);
+  const [formData, setFormData] = useState({
+    f_name: '',
+    l_name: '',
+    address: '',
+    tel_number: '',
+    date_of_birth: '',
+    sex: '',
+    marital_status: '',
+    hospital_date_registered: ''
+  });
 
   useEffect(() => {
     fetchPatients();
@@ -109,13 +119,105 @@ export default function Patients() {
     }
   }
 
-  const handleNextOfKinClick = (patient) => {
+  const handleRowClick = (patient) => {
     setSelectedPatient(patient);
+  };
+
+  const handleNextOfKinClick = () => {
     setOpenNextOfKinDialog(true);
   };
 
   const handleNextOfKinClose = () => {
     setOpenNextOfKinDialog(false);
+    setSelectedPatient(null);
+  };
+
+  const handleCreateOpen = () => {
+    setFormData({
+      f_name: '',
+      l_name: '',
+      address: '',
+      tel_number: '',
+      date_of_birth: '',
+      sex: '',
+      marital_status: '',
+      hospital_date_registered: ''
+    });
+    setOpenCreateDialog(true);
+  };
+
+  const handleCreateClose = () => {
+    setOpenCreateDialog(false);
+  };
+
+  const handleUpdateOpen = () => {
+    if (selectedPatient) {
+      setFormData(selectedPatient);
+      setOpenUpdateDialog(true);
+    }
+  };
+
+  const handleUpdateClose = () => {
+    setOpenUpdateDialog(false);
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (selectedPatient) {
+        const { error } = await supabase
+          .from('patient')
+          .delete()
+          .eq('patient_num', selectedPatient.patient_num);
+        
+        if (error) {
+          console.error('Error deleting patient:', error);
+        } else {
+          fetchPatients();
+          setSelectedPatient(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting patient:', error.message);
+    }
+  };
+
+  const handleFormChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleCreateSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from('patient')
+        .insert([formData]);
+      
+      if (error) {
+        console.error('Error creating patient:', error);
+      } else {
+        fetchPatients();
+        handleCreateClose();
+      }
+    } catch (error) {
+      console.error('Error creating patient:', error.message);
+    }
+  };
+
+  const handleUpdateSubmit = async () => {
+    try {
+      const { error } = await supabase
+        .from('patient')
+        .update(formData)
+        .eq('patient_num', formData.patient_num);
+
+      if (error) {
+        console.error('Error updating patient:', error);
+      } else {
+        fetchPatients();
+        handleUpdateClose();
+      }
+    } catch (error) {
+      console.error('Error updating patient:', error.message);
+    }
   };
 
   const toggleDrawer = () => {
@@ -135,12 +237,17 @@ export default function Patients() {
           <th>Sex</th>
           <th>Marital Status</th>
           <th>Date Registered</th>
-          <th>Next of Kin</th>
         </tr>
       </thead>
       <tbody>
         {patients.map((patient) => (
-          <tr key={patient.patient_num}>
+          <tr
+            key={patient.patient_num}
+            style={{
+              backgroundColor: selectedPatient?.patient_num === patient.patient_num ? '#f0f0f0' : 'transparent'
+            }}
+            onClick={() => handleRowClick(patient)}
+          >
             <td>{patient.patient_num}</td>
             <td>{patient.f_name}</td>
             <td>{patient.l_name}</td>
@@ -150,11 +257,6 @@ export default function Patients() {
             <td>{patient.sex}</td>
             <td>{patient.marital_status}</td>
             <td>{patient.hospital_date_registered}</td>
-            <td>
-              <Button variant="contained" color="secondary" onClick={() => handleNextOfKinClick(patient)}>
-                View Next of Kin
-              </Button>
-            </td>
           </tr>
         ))}
       </tbody>
@@ -163,7 +265,7 @@ export default function Patients() {
 
   return (
     <ThemeProvider theme={customTheme}>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', height: '100vh' }}>
         <CssBaseline />
         <AppBar position="absolute" open={open}>
           <Toolbar sx={{ pr: '24px' }}>
@@ -188,11 +290,6 @@ export default function Patients() {
             >
               Wellmeadows Hospital
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
             <IconButton color="inherit">
               <LogoutIcon />
             </IconButton>
@@ -224,7 +321,7 @@ export default function Patients() {
                 ? theme.palette.grey[100]
                 : theme.palette.grey[900],
             flexGrow: 1,
-            height: '100vh',
+            height: '100%',
             overflow: 'auto',
           }}
         >
@@ -233,18 +330,57 @@ export default function Patients() {
             <Typography variant="h4" component="h2" gutterBottom>
               Patients
             </Typography>
-            <Button variant="contained" onClick={() => setView('patients')}>All Patients</Button>
-            <Button variant="contained" onClick={() => setView('inPatients')}>In Patients</Button>
-            <Button variant="contained" onClick={() => setView('outPatients')}>Out Patients</Button>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', border: '2px solid #800080' }}>
-                  {view === 'patients' && renderPatientsTable()}
-                  {view === 'inPatients' && <InPatients />}
-                  {view === 'outPatients' && <OutPatients />}
-                </Paper>
-              </Grid>
-            </Grid>
+            <Box sx={{ display: 'flex', mb: 2, gap: 2 }}>
+              <Button variant="contained" onClick={() => setView('patients')}>All Patients</Button>
+              <Button variant="contained" onClick={() => setView('inPatients')}>In-Patients</Button>
+              <Button variant="contained" onClick={() => setView('outPatients')}>Out-Patients</Button>
+            </Box>
+            {view === 'patients' && (
+              <>
+                <Box sx={{ display: 'flex', mb: 2, gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleCreateOpen}
+                  >
+                    Create Patient
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleUpdateOpen}
+                    disabled={!selectedPatient}
+                  >
+                    Update Patient
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={handleDelete}
+                    disabled={!selectedPatient}
+                  >
+                    Delete Patient
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleNextOfKinClick}
+                    disabled={!selectedPatient}
+                  >
+                    View Next of Kin
+                  </Button>
+                </Box>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', border: '2px solid #800080', overflow: 'hidden' }}>
+                      {renderPatientsTable()}
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+            {view === 'inPatients' && <InPatients />}
+            {view === 'outPatients' && <OutPatients />}
           </Container>
           <Dialog open={openNextOfKinDialog} onClose={handleNextOfKinClose} fullWidth maxWidth="sm">
             <DialogTitle>Next of Kin</DialogTitle>
@@ -257,7 +393,182 @@ export default function Patients() {
               </Button>
             </DialogActions>
           </Dialog>
-          <Copyright />
+          <Dialog open={openCreateDialog} onClose={handleCreateClose} fullWidth maxWidth="sm">
+            <DialogTitle>Create Patient</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                name="f_name"
+                label="First Name"
+                type="text"
+                fullWidth
+                value={formData.f_name}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="l_name"
+                label="Last Name"
+                type="text"
+                fullWidth
+                value={formData.l_name}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="address"
+                label="Address"
+                type="text"
+                fullWidth
+                value={formData.address}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="tel_number"
+                label="Telephone Number"
+                type="text"
+                fullWidth
+                value={formData.tel_number}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="date_of_birth"
+                label="Date of Birth"
+                type="date"
+                fullWidth
+                value={formData.date_of_birth}
+                onChange={handleFormChange}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                margin="dense"
+                name="sex"
+                label="Sex"
+                type="text"
+                fullWidth
+                value={formData.sex}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="marital_status"
+                label="Marital Status"
+                type="text"
+                fullWidth
+                value={formData.marital_status}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="hospital_date_registered"
+                label="Date Registered"
+                type="date"
+                fullWidth
+                value={formData.hospital_date_registered}
+                onChange={handleFormChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCreateClose} color="primary">
+                Cancel
+              </Button>
+              <Button onClick={handleCreateSubmit} color="primary">
+                Create
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog open={openUpdateDialog} onClose={handleUpdateClose} fullWidth maxWidth="sm">
+            <DialogTitle>Update Patient</DialogTitle>
+            <DialogContent>
+              <TextField
+                autoFocus
+                margin="dense"
+                name="f_name"
+                label="First Name"
+                type="text"
+                fullWidth
+                value={formData.f_name}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="l_name"
+                label="Last Name"
+                type="text"
+                fullWidth
+                value={formData.l_name}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="address"
+                label="Address"
+                type="text"
+                fullWidth
+                value={formData.address}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="tel_number"
+                label="Telephone Number"
+                type="text"
+                fullWidth
+                value={formData.tel_number}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="date_of_birth"
+                label="Date of Birth"
+                type="date"
+                fullWidth
+                value={formData.date_of_birth}
+                onChange={handleFormChange}
+                InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                margin="dense"
+                name="sex"
+                label="Sex"
+                type="text"
+                fullWidth
+                value={formData.sex}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="marital_status"
+                label="Marital Status"
+                type="text"
+                fullWidth
+                value={formData.marital_status}
+                onChange={handleFormChange}
+              />
+              <TextField
+                margin="dense"
+                name="hospital_date_registered"
+                label="Date Registered"
+                type="date"
+                fullWidth
+                value={formData.hospital_date_registered}
+                onChange={handleFormChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleUpdateClose} color="primary">
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateSubmit} color="primary">
+                Update
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Box>
       </Box>
     </ThemeProvider>

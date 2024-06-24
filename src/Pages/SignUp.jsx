@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { TextField, Button, Grid, Typography, Container, Paper, Box, Link as MuiLink } from '@mui/material';
-import { useNavigate, Link } from 'react-router-dom';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import { TextField, Button, Grid, Typography, Container, Paper, Box, Link as MuiLink, Avatar, Checkbox, FormControlLabel } from '@mui/material';
+import { Link, useNavigate } from 'react-router-dom';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Avatar from '@mui/material/Avatar';
+import supabase from '../Services/Supabase';
 
-function SignUpForm() {
+const SignUp = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -17,26 +15,41 @@ function SignUpForm() {
 
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
+  function handleChange(event) {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [event.target.name]: event.target.value,
     }));
-  };
+  }
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    console.log(formData);
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    });
-    navigate('/dashboard');
-  };
+
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      alert("Sign up successful. You can now log in.");
+      navigate('/'); // Redirect to login page
+    } catch (error) {
+      alert(error.message);
+    }
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", height: "95vh", justifyContent: "center" }}>
@@ -89,7 +102,7 @@ function SignUpForm() {
               <TextField
                 label="Password"
                 variant="outlined"
-                type="text"
+                type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
@@ -101,7 +114,7 @@ function SignUpForm() {
               <TextField
                 label="Confirm Password"
                 variant="outlined"
-                type="text"
+                type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -134,4 +147,4 @@ function SignUpForm() {
   );
 }
 
-export default SignUpForm;
+export default SignUp;

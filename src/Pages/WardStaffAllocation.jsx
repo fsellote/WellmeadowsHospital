@@ -8,8 +8,6 @@ import MuiAppBar from '@mui/material/AppBar';
 import List from '@mui/material/List';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import Badge from '@mui/material/Badge';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { mainListItems } from '../Components/NavList';
 import Copyright from '../Components/Copyright';
@@ -125,11 +123,6 @@ const WardStaffAllocation = () => {
             >
               Wellmeadows Hospital
             </Typography>
-            <IconButton color="inherit">
-              <Badge badgeContent={4} color="secondary">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
             <IconButton color="inherit">
               <LogoutIcon />
             </IconButton>
